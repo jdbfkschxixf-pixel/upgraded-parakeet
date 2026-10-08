@@ -1,0 +1,56 @@
+CREATE TABLE roles (
+roles_id SERIAL PRIMARY KEY,
+roles_name VARCHAR(50)
+);
+
+CREATE TABLE users (
+users_id SERIAL PRIMARY KEY,
+login VARCHAR(100),
+last_name VARCHAR(100),
+first_name VARCHAR(100),
+middle_name VARCHAR(100),
+roles_id INTEGER REFERENCES roles (roles_id)
+);
+
+CREATE TABLE category (
+category_id SERIAL PRIMARY KEY,
+category_name VARCHAR(100)
+);
+
+CREATE TABLE sizes(
+sizes_id SERIAL PRIMARY KEY,
+sizes_name VARCHAR(100)
+);
+
+CREATE TABLE model(
+model_id SERIAL PRIMARY KEY,
+model_name VARCHAR(100),
+manufacture VARCHAR(100),
+image_url VARCHAR(100),
+description TEXT,
+composition TEXT,
+price VARCHAR(100),
+category_id INT NOT NULL REFERENCES category (category_id)
+);
+
+CREATE TABLE product (
+product_id SERIAL PRIMARY KEY,
+model_id INT NOT NULL REFERENCES model (model_id),
+sizes_id INT NOT NULL REFERENCES sizes (sizes_id),
+product_name VARCHAR(100)
+);
+
+CREATE TABLE orders (
+orders_id SERIAL PRIMARY KEY,
+users_id INT NOT NULL REFERENCES users (users_id),
+order_date DATE NOT NULL DEFAULT CURRENT_DATE,
+status VARCHAR(20) NOT NULL DEFAULT 'new'
+);
+
+CREATE TABLE orders_item (
+orders_item_id SERIAL PRIMARY KEY,
+orders_id INT NOT NULL REFERENCES orders (orders_id),
+product_id INT NOT NULL REFERENCES product (product_id),
+model_id INT NOT NULL REFERENCES model (model_id),
+quantity INT NOT NULL CHECK (quantity > 0)
+);
