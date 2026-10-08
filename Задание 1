@@ -54,3 +54,81 @@ product_id INT NOT NULL REFERENCES product (product_id),
 model_id INT NOT NULL REFERENCES model (model_id),
 quantity INT NOT NULL CHECK (quantity > 0)
 );
+
+--------------------------------------------------------
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+import psycopg2
+
+DB_HOST = "localhost"
+DB_NAME = "practica"
+DB_USER = "postgres"
+DB_PASS = "Nik12345"
+DB_PORT = "5432"
+
+def fetch_users():
+    try:
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASS,
+            port=DB_PORT
+        )
+
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT u.users_id, u.first_name, u.last_name, u.middle_name, u.login, r.roles_name
+            FROM users u
+            LEFT JOIN roles r ON u.roles_id = r.roles_id;
+        """)
+
+        rows = cur.fetchall()
+
+        for item in tree.get_children():
+            tree.delete(item)
+
+        for row in rows:
+            tree.insert('', 'end', values=row)
+
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        messagebox.showerror("Ошибка БД", str(e))
+
+window = tk.Tk()
+
+window.title("Пользователи")
+
+window.geometry("800x400")
+
+tk.Label(window, text="Список пользователей", font=("Arial", 14, "bold")).pack(pady=10)
+
+columns = ("users_id", "first_name", "last_name", "middle_name", "login", "roles_name")
+
+tree = ttk.Treeview(window, columns=columns, show="headings")
+
+tree.heading("users_id", text="ID")
+tree.heading("first_name", text="Имя")
+tree.heading("last_name", text="Фамилия")
+tree.heading("middle_name", text="Отчество")
+tree.heading("login", text="Логин")
+tree.heading("roles_name", text="Роль")
+
+tree.column("users_id", width=60, anchor="center")
+tree.column("first_name", width=120)
+tree.column("last_name", width=120)
+tree.column("middle_name", width=120)
+tree.column("login", width=130)
+tree.column("roles_name", width=130)
+
+tree.pack(fill="both", expand=True, padx=10, pady=5)
+
+tk.Button(window, text="Обновить", command=fetch_users, font=("Arial", 14)).pack(pady=5)
+
+fetch_users()
+
+window.mainloop()
