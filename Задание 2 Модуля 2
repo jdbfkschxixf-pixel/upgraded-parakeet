@@ -1,0 +1,82 @@
+import tkinter as tk
+from tkinter import messagebox
+import psycopg2
+
+DB_CONFIG = {
+    "host": "localhost",
+    "database": "practica",
+    "user": "postgres",
+    "password": "Nik12345",
+    "port": "5432"
+}
+
+def get_user_fio(login):  # Объявляем функцию получения ФИО по логину
+    conn = psycopg2.connect(**DB_CONFIG)  # Устанавливаем соединение с БД
+    try:
+        with conn.cursor() as cur:
+            # ВАЖНО: в вашей схеме поля называются last_name, first_name, middle_name
+            cur.execute(
+                "SELECT last_name, first_name, middle_name FROM users WHERE login = %s;",
+                (login,)
+            )
+            row = cur.fetchone()
+            if row:
+                return f"{row[0] or ''} {row[1] or ''} {row[2] or ''}".strip()
+    except Exception as e:
+        messagebox.showerror("Ошибка БД", str(e))
+    finally:
+        conn.close()
+    return None
+
+def show_main_screen(user_fio):
+    for w in root.winfo_children():
+        w.destroy()
+
+    root.title("Главная страница")
+    root.geometry("600x400")
+    root.resizable(True, True)
+
+    tk.Label(root, text=f"Добро пожаловать,\n{user_fio}!",
+             font=("Arial", 18, "bold"), pady=30).pack()
+    tk.Label(root, text="Это ваша главная страница.",
+             font=("Arial", 14), fg="#555").pack(expand=True)
+
+    tk.Button(root, text="Выйти", command=show_login_screen,
+              bg="#f44336", fg="white", font=("Arial", 11),
+              width=15).pack(side="bottom", pady=20)
+
+def show_login_screen():
+    for w in root.winfo_children():
+        w.destroy()
+
+    root.title("Вход в систему")
+    root.geometry("350x200")
+    root.resizable(False, False)
+
+    tk.Label(root, text="Введите логин:", font=("Arial", 12)).pack(pady=20)
+
+    entry_login = tk.Entry(root, width=25, font=("Arial", 12))
+    entry_login.pack()
+    entry_login.focus()
+
+    def handle_login():
+        login = entry_login.get().strip()
+        if not login:
+            messagebox.showwarning("Ошибка", "Введите логин!")
+            return
+
+        fio = get_user_fio(login)
+        if fio:
+            show_main_screen(fio)
+        else:
+            messagebox.showerror("Ошибка", "Пользователь не найден!")
+
+    entry_login.bind('<Return>', lambda e: handle_login())
+
+    tk.Button(root, text="Войти", command=handle_login, width=15).pack(pady=20)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    show_login_screen()
+    root.mainloop()
